@@ -1,0 +1,877 @@
+---
+title: "Problem Set 1 RMarkdown"
+author: "Irina Vélez - Lucía Fillippo - Daniel Casas - Miguel Victoria"
+date: "2023-06-21"
+output: word_document
+---
+```{r setup, include=FALSE}
+
+# install pacman
+if(!require(pacman)) install.packages("pacman") ; require(pacman)
+
+## Automatiza cargue de paquetes
+require(pacman)
+p_load(rio, 
+       tidyverse, 
+       skimr,
+       caret,
+       rstudioapi,
+       rvest,
+       ggplot2,
+       stargazer, 
+       broom, 
+       flextable, 
+       officer,
+       boot)
+```
+
+```{r path, include=FALSE}
+rm(list=ls())
+getwd()
+path_sript <- rstudioapi::getActiveDocumentContext()$path
+path_folder <- dirname(path_sript)
+setwd(path_folder)
+```
+
+```{r Import_data, eval=FALSE, include=FALSE}
+### Loading data  
+data_url = "https://ignaciomsarmiento.github.io/GEIH2018_sample/pages/geih_"
+
+# Loop
+db_list <- lapply(1:10, function(i) {
+  url <- paste0(data_url, "page_", i, ".html")
+  page <- read_html(url) 
+  tabla <- page %>% html_table
+  db_geih <- data.frame(tabla)
+})
+
+db_geih <- do.call(rbind,db_list) # Concatenate the tables in a dataframe
+view(db_geih)
+```
+
+```{r Transforming_data, eval=FALSE, include=FALSE}
+##Filtering the data to those over 18 and employed (ocu=1)
+# Details of the variable age 
+summary(db_geih$age)
+sum(is.na(db_geih$age)) # Checking for missing values
+sum(is.na(db_geih$ocu))
+
+db_geih_filtered <- db_geih[db_geih$age > 18 & db_geih$ocu == 1, ]
+save(db_geih_filtered, file = "/Users/irina/Documents/Repositorios/PS1_Predicting_income/stores/data.Rdata")
+
+## Dealing with missing values
+# Count missing values for each column and sorting
+missing_counts <- sapply(db_geih_filtered, function(x) sum(is.na(x)))
+sorted_missing <- sort(missing_counts, decreasing = TRUE)
+top_missing <- head(sorted_missing, 30)
+top_missing
+
+# Deleting the top missing variables and all variables that start with cclasnr
+delete_var <- c("p550", "p7310", "p7350", "p7422", "p7422s1", "p7472", "p7472s1", "ina", "imdi", "imdies", "y_gananciaNetaAgro_m", "iof3ies", "y_accidentes_m", "p6585s4a2", "y_subEducativo_m", "isaes", "iof2es", "dominio", "clase")
+delete_var2 <- grep("^cclasnr", names(db_geih_filtered), value = TRUE)
+delete_t <- c(delete_var, delete_var2)
+
+geih_filtered <- db_geih_filtered %>%
+  select(-one_of(delete_t))
+
+## Dealing with 0 wages
+
+# Verification of the min and max value of the main resultant variables, and their missing values
+summary(geih_filtered$p6500)           # Monthly labor income. DANE Variable
+summary(geih_filtered$y_ingLab_m)      # labor income salaried nominal monthly
+summary(geih_filtered$y_ingLab_m_ha)   # labor income salaried nominal hourly
+summary(geih_filtered$y_salary_m)      # salary - nominal monthly
+summary(geih_filtered$y_salary_m_hu)   # salary - real hourly (usual)
+
+missing_income <- sum(is.na(geih_filtered$y_ingLab_m_ha))
+obs <- nrow(geih_filtered)
+
+# The 40.32% of the observations for the main resultant variables have missing values
+missing_perc = (missing_income/obs)*100
+missing_perc
+
+missing_values <- is.na(geih_filtered$y_salary_m_hu)
+missing_data <- geih_filtered[missing_values, c("estrato1", "maxEducLevel")]
+
+missing_by_estrato <- table(missing_data$estrato1)
+missing_by_educ <- table(missing_data$maxEducLevel)
+
+
+missing_by_estrato <- sort(missing_by_estrato, decreasing = TRUE)
+missing_by_educ <- sort(missing_by_educ, decreasing = TRUE)
+
+missing_by_estrato_p <- missing_by_estrato / sum(missing_by_estrato) * 100
+missing_by_educ_p <- missing_by_educ / sum(missing_by_educ) * 100
+
+missing_by_estrato_p
+missing_by_educ_p
+
+# Data frame with the results
+results <- data.frame(estrato = names(missing_by_estrato_p),
+                      educacion = names(missing_by_educ_p),
+                      p_missing_estrato = missing_by_estrato_p,
+                      p_missing_educacion = missing_by_educ_p)
+
+knitr::kable(results, caption = "Missing Values by Estrato and Educación")
+
+geih_filtered <- geih_filtered[complete.cases(geih_filtered$y_salary_m_hu), ]
+save(geih_filtered, file = "/Users/irina/Documents/Repositorios/PS1_Predicting_income/stores/data.Rdata")
+```
+
+```{r Import_DB, include=FALSE}
+load("../stores/data.Rdata")
+geih_filtered <- geih_filtered[complete.cases(geih_filtered$maxEducLevel), ]
+```
+
+# Taller 1
+
+El presente informe presenta la solución al Problem Set 1 de la clase Big Data & Machine Learning, con el objetivo de aplicar diversos conceptos y herramientas para la predicción de modelos, el manejo de bases de datos grandes, entre otros. Para el desarrollo del trabajo se utilizó el repositorio GitHub el cual contiene información de la Gran Encuesta Integrada de Hogares - GEIH para el año 2018, luego en word ponemos este hiperbínculo:
+
+https://ignaciomsarmiento.github.io/GEIH2018_sample/
+
+Además, se empleó el sotware Rstudio para el manejo de los datos, generación de resultados y desarrollo del taller, cuyo código se encuentra en el siguiente link: (link del Github con el código)
+
+## 1. Introducción
+
+El valor de ingresos de las personas es un insumo esencial para el desarrollo de políticas públicas, ya sea para identificar a los hogares que tienen la posibilidad de pagar más impuestos, así como para lograr una mejor focalización en aquellos hogares que requieren apoyos sociales; no obstante, en algunas ocasiones los ingresos de las personas no son reportados, de manera que esto se convierte en una barrera para el desarrollo de políticas públicas eficientes. En virtud de lo anterior, poder determinar el valor de los ingresos de las personas se convierte en un gran insumo para el desarrollo de políticas tributarias y sociales, razón por la cual el objetivo principal de este documento es construir un modelo predictivo de los salarios por hora de los individuos, a partir del siguiente modelo:
+
+$$
+w=f(X)+u
+$$
+
+donde "w" representa el salario por hora y "X" es una matriz de potenciales variables que explican el salario. Como se mencionó previamente, para la creación de este modelo se utilizarán datos de la Gran Encuesta Integrada de Hogares – GEIH del año 2018. 
+
+Para importar los datos, es importante conocer qué tipo de página web contiene la información, en este caso, la página web que contiene las bases de datos es dinámica, razón por la cual es pertinente identificar el link principal a partir del cual se realizará la extracción de la información. Para esto se aplicó un código en bucle para que la extracción de la informacíon de las distintas ventanas de la página web fuese más eficiente; además, se realizaron una serie de filtros a los datos, siguiendo las instrucciones dadas, con la finalidad de eliminar las variables "N/A" y considerar únicamente a los individuos mayores de 18 años.
+
+# Descripción de los datos
+## Descripción general
+## Análisis descriptivo
+=======
+
+De manera general, se identifica que nuestra base de datos está compuesta por 9.784 filas y por 151 columnas. Las variables que hacen parte de la base son: 
+
+- (y_salary_m_hu): Indica el salario mensual por hora de la persona
+- (pet): Indica si la persona hace parte de la Población en Edad de Trabajar - PET
+- (mes): Contiene el mes de referencia
+- (age): Contiene la edad de la persona
+- (sex): Contiene el sexo de la persona
+- (ocu): Señala si la persona es ocupada o no ocupada
+- (oficio): Indica el oficio de la persona
+- (maxEducLevel): Indicar el máximo nivel educativo alcanzado
+- (totalHoursWorked): Indica el total de horas trabajadas en el último mes
+- (exp): Hace referencia a la experiencia en años que tiene la persona
+
+```{r general_description, echo=FALSE}
+# Aquí hacemos la clasificación de variables
+exp <- floor(c(geih_filtered$p6426/12)) #Ponemos anual la variable de experiencia
+DGEIH<-subset(geih_filtered, select = c( "y_salary_m_hu", "pet", "mes", "age", "sex","ocu", "oficio", "maxEducLevel","totalHoursWorked")) 
+
+#Hacemos un subset con las variables a usar
+DGEIH<-cbind(DGEIH, exp) #Incluimos las variables calculadas que revisaremos
+
+summary(DGEIH)
+
+```
+
+
+```{r age_description_1, echo=FALSE}
+# (1) Descripción general de la base
+dimen_dgeih <- dim(geih_filtered)  #Número de filas y columnas
+
+# Obtener los nombres de las variables
+nombres_variables <- names(DGEIH)
+```
+
+Dicho lo anterior, a continuación se procede a realizar una descripción más amplia y gráfica de las variables que harán parte del modelo.
+
+=======
+## Descripción edad
+=======
+La variable de edad es una variable con números enteros donde se observa un mínimo de 19 años, lo cual guarda sentido con la filtración inicial de los datos, donde se tuvo en cuenta únicamente a las personas mayores de 18 años, y en contraste se identifica un máximo de 86 años. En el primer cuartil de la base se observa una edad de 27 años, en el tercer cuartil una de 45 años. La mediana de los datos es de 34 años, la media es de 36 años y la moda es de 24 años. A continuación se presenta una gráfica de barras que permite observar la distribución de la edad a lo largo de la muestra, donde se identifica que, en general, se cuenta con una población relativamente joven.
+
+```{r age_description_2, echo=FALSE}
+# (2) Descripción de la variable de edad
+Edad<- geih_filtered$age
+edad_clas <- class(Edad)        #Aquí vemos la clase que es de números enteros (integer)
+
+modeEdad <- function(Edad){
+  return(as.numeric(names(which.max(table(Edad)))))
+}
+edad_mod <- modeEdad(Edad)      #La moda de la edad
+
+# Estadísticas descriptivas con summary
+summary(Edad)
+edad_mod
+```
+
+```{r age_description_3, echo=FALSE}
+# Ahora haremos un diagrama de barras 
+# Crearemos un data frame con los datos de edad
+datos_edad <- data.frame(Edad)
+
+# Crearemos el diagrama de barras
+bar_chart <- ggplot(datos_edad, aes(x = Edad)) +
+  geom_bar(fill = "#2E75B6", color = "white") +
+  labs(x = "Edad", y = "Frecuencia", title = "Distribución de Edad") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, face = "bold"),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        axis.line = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position = "none")
+
+# Que nos muestre el diagrama de barras
+print(bar_chart)
+```
+
+=======
+## Descripción ocupación
+=======
+
+La variable de ocupación es una dummy que toma el valor de "1" si la persona está ocupada y "0" si no lo está. Inicialmente en la base sin filtrar se tenía una distribución de ocupación con 16.277 personas ocupadas y 3.524 no ocupadas, como la que se observa a continuación:
+
+```{r ocup_description_1, echo=FALSE}
+# (4) Descripción de la variable de ocupación
+#Creamos un data frame con los datos de ocupación
+datos_ocu <- data.frame(
+  Categoría = c("Ocupadas", "No Ocupadas"),
+  Cantidad = c(16277, 3524)
+)
+
+#Calculamos los porcentajes
+datos_ocu$Porcentaje <- round(datos_ocu$Cantidad / sum(datos_ocu$Cantidad) * 100, 1)
+
+#Creamos el diagrama de pie
+pie_chart <- ggplot(datos_ocu, aes(x = "", y = Cantidad, fill = Categoría)) +
+  geom_bar(stat = "identity", width = 1, color = "white") +
+  coord_polar("y", start = 0) +
+  theme_void() +
+  theme(legend.title = element_blank(),
+        legend.position = "bottom",
+        plot.margin = margin(0, 0, 0, 0)) +
+  geom_text(aes(label = paste0(Categoría, "\n", Porcentaje, "%")), 
+            position = position_stack(vjust = 0.5), size = 3, color = "white")
+print(pie_chart)
+```
+
+Ahora bien, como resultado de la filtración inicial llevada a cabo, y siguiendo la instrucción impartida, la base de datos final únicamente se cuenta con personas mayores de 18 años ocupadas lo que da como resultado un total de 9.784 personas ocupadas.
+
+```{r ocup_description_2, echo=FALSE}
+# (4) Descripción de la variable de ocupación
+ocu<- geih_filtered$ocu
+leng_ocup <- length(ocu)
+ocup_clas <- class(ocu)          #Aquí vemos la clase y nos dice que es categórica (factor)
+ocup_lev <- levels(ocu)         #Como es categórica y tiene nivel 0 y 1         
+table(ocu)
+```
+
+## Descripción educación
+
+La variable de educación es categórica y tiene la siguiente clasificación por categorías:
+
+1. Ninguno: Que corresponde a aquellas personas sin educación
+2 Preescolar: Que corresponde a aquellas personas que solamente terminaron preescolar
+3 Basica primaria: Que corresponde a aquellas personas que solo terminaron básica primaria, esto es, los grados de primero a quinto
+4 Basica secundaria: Que corresponde a aquellas personas que solo terminaron básica secundaria, esto es, los grados de secto a noveno
+5 Media: Que corresponde a aquellas personas que solo terminaron la educación media, esto es, los grados de noveno a once
+6 Superior - Universitaria: Que corresponde a aquellas personas que terminaron educación superior y/o universitaria
+7 No sabe, No informa
+
+Dicho lo anterior, el análisis de esta variable muestra que la media y la mediana son personas que tienen educación universitaria, lo cual guarda sentido con que sean aquellas que han podido acceder al mercado laboral y encontrarse ocupadas.
+
+```{r educ_description_1, echo=FALSE}
+educ<- geih_filtered$maxEducLevel
+educ_clas <- class(educ)
+
+modeEduc <- function(educ){
+  return(as.numeric(names(which.max(table(educ)))))
+}
+mod_educ <- modeEduc(educ)      #La moda de la educación es 7 (terciary)
+
+summary(educ)
+cat("La moda de la variable ocupación corresponde a la clasificación ",mod_educ)
+
+```
+
+Lo anterior se puede constatar de manera visual en la siguiente gráfica de barras, donde se muestra la manera en que se encuentra distribuida la variable de educación, de acuerdo con la base de datos obtenida:
+
+```{r educ_description_2, echo=FALSE}
+
+# Creamos el data frame
+datos_educ <- data.frame(educ)
+
+# Creamos el diagrama de barras con etiquetas de datos y demás
+bar_chart <- ggplot(datos_educ, aes(x = as.factor(educ))) +
+  geom_bar(fill = "#2E75B6", color = "white") +
+  geom_text(stat = 'count', aes(label = ..count..), vjust = -0.5, size = 3, color = 'black') +  # Agregar etiquetas de datos
+  labs(x = "Educ", y = "Frecuencia", title = "Distribución de Educación") +
+  scale_x_discrete(labels = c("Ninguna", "Preescolar", "Primaria", "Secundaria", "Media", "Universitaria", "No_informa")) +  # Cambiar las categorías del eje x
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, face = "bold"),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 7),
+        axis.line.y = element_blank(),  # Eliminar el eje vertical izquierdo
+        axis.ticks.y = element_blank(),  # Eliminar los ticks del eje vertical izquierdo
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position = "none")
+
+# Hacemos que nos muestre el diagrama de barras
+print(bar_chart)
+```
+
+## Descripción sexo
+
+La variable de género es dummy y toma el valor de 0 si la persona es mujer y toma el valor de 1 si es hombre. Los datos reflejan un total de 4.909 hombres y 4.875 mujeres, como se muestra en la siguiente gráfica de pie.
+
+```{r sex_description, echo=FALSE}
+sex<- geih_filtered$sex
+sex_clas <- class(sex)      #Aquí vemos la clase y nos dice que es integer, es una variable dummy
+sex_tabl <- table(sex)
+# Creamos un data frame con los datos de sexo
+datos_sex <- data.frame(
+  Categoría = c("Hombres", "Mujeres"),
+  Cantidad = c(4909, 4875)
+)
+
+# Crear el diagrama de pie con etiquetas de datos
+pie_chart <- ggplot(datos_sex, aes(x = "", y = Cantidad, fill = Categoría)) +
+  geom_bar(stat = "identity", width = 1, color = "white") +
+  geom_text(aes(label = Cantidad), position = position_stack(vjust = 0.5), size = 4) +  # Etiquetas de datos en valores enteros
+  coord_polar("y", start = 0) +
+  labs(title = "Distribución por género") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, face = "bold"),
+        legend.position = "right")
+
+# Mostrar el diagrama de pie
+print(pie_chart)
+```
+
+## Descripción de la experiencia
+
+La variable de experiencia es coninua e indica los meses que lleva trabajando la persona en su trabajo actual. La mediana y la moda de esta variable es de 24 meses, la media de 50 meses,  y el valor máximo es de 696 meses.
+
+```{r exp_description_1, echo=FALSE}
+expp <- geih_filtered$p6426
+expp<- geih_filtered$p6426
+exp_clas <- class(expp)         #Aquí vemos la clase y nos dice que es numérica
+
+modeExp <- function(expp){
+   return(as.numeric(names(which.max(table(expp)))))
+ }
+summary(expp)
+modeExp(expp)       #Aquí vemos que la moda de la experiencia es de 0 años
+```
+
+En virtud de lo anterior, el siguiente histograma refleja la distribución de la experiencia, donde se observa que la mayoría de observaciones se ubican entre 0 y 50 meses, lo cual guarda sentido con que los datos de media señalados previamente.
+
+```{r exp_description_2, echo=FALSE}
+# Generar el histograma
+histograma <- hist(geih_filtered$p6426, breaks = seq(0, 700, by = 50), col = "#2E75B6", border = "white",
+                   xlab = "Experiencia (meses)", ylab = "Frecuencia", main = "Histograma de Experiencia")
+
+# Personalizar la apariencia del histograma
+par(las = 1)  # Orientación de etiquetas de ejes
+box()  # Agregar un marco alrededor del histograma
+```
+
+## Perfil de Salario y Edad
+
+De acuerdo con la forma específicación funcional establecida para el perfil de edad-salario, presentada a continuación: 
+$$
+log⁡(w)= β_1+β_2 Age+β_3Age^2+u
+$$
+
+Se detalla que se escogió la variable edad y edad elevado al cuadrado, precisamente porque de acuerdo a la teoría de la economía laboral, se ha observado empíricamente que la relación entre el salario y la edad de los trabajadores sigue una tendencia en forma de “pico de edad”, perseguido por un decrecimiento en el mediano/largo plazo. 
+
+Esto, considerando que los trabajadores adquieren experiencia y habilidades a lo largo de su vida laboral, su productividad tiende a aumentar, lo que se refleja a través de mejores y más altos salarios. Esto, nos introduce al concepto de “pico de edad”, en el que los trabajadores alcanzan su punto máximo de productividad y, por tanto obtienen salarios más altos. 
+
+Sin embargo, a medida que los trabajadores envejecen, de acuerdo al ciclo de la vida, empiezan a enfrentar desventajas relacionadas con la obsolescencia en habilidades, menor capacidad física y adaptabilidad, entre otras, que en últimas se traduce en niveles decrecientes de productividad. 
+
+En ese sentido, para capturar esta relación no lineal entre la edad y el salario, naturalmente en los modelos de regresión se utiliza una forma funcional en la que la edad se eleva al cuadrado, permitiendo capturar el crecimiento inicial y su posterior decrecimiento. 
+
+A continuación se presentan los coeficientes de la salida de regresión y su interpretación:
+
+```{r Reg_1_p3, echo=FALSE}
+# Modificación de variables
+geih_filtered$age_2 <- geih_filtered$age^2
+geih_filtered$log_salarioreal <-log(geih_filtered$y_salary_m_hu)
+
+# Modelo
+regresion_salario_edad <- lm (log_salarioreal~age +age_2,geih_filtered)
+stargazer(regresion_salario_edad,type="text")
+
+```
+
+Si se obtienen los valores y estimados a través de la siguiente derivada: 
+
+$$
+Log(w)= 0.058age-0.00063 age^2
+$$
+$$
+(∂Log(w))/∂age= 0.058 + (2)(-0.00063)age
+$$
+$$
+(∂Log(w))/∂age= 0.058 + (0.00126)age
+$$
+$$
+0.058/0.00126=age=>46 
+$$
+Así por ejemplo, de manera matemática y manual, encontramos la edad pico, o el punto máximo de nuestro modelo de regresión considerando los estimadores obtenidos. 
+
+Graficando los valores estimados sobre la nube de puntos, obtenemos en efecto que la edad pico se podría determinar en los 46 años tal como se observa en la imagen presentada a continuación y luego, comienza a decrecer.
+
+```{r plot_p3, echo=FALSE}
+y_estimados <- predict(regresion_salario_edad)
+
+
+plot(geih_filtered$age, geih_filtered$log_salarioreal, 
+     xlab = "Edad", ylab = "Log Salario Real",
+     main = "Regresión de Salario Real en función de la Edad",
+     pch = 16, col = "blue")
+
+points(geih_filtered$age, y_estimados, pch = 16, col = "green")
+
+```
+
+Ahora, bien los intervalos de confianza obtenidos por el método de Bootstrap representan un margen de error del 5% con el 95% de confianza los siguientes valores
+
+```{r boostrap_p3, echo=FALSE}
+##Boot 1
+eta_fn<-function(data,index){
+  coef(lm(log_salarioreal~age +age_2, data = data, subset = index))[2]}
+
+##Boot 2
+eta_fn2<-function(data,index){
+  coef(lm(log_salarioreal~age +age_2, data = data, subset = index))[3]}
+
+##Guardar resultados
+boot_results1 <- boot(geih_filtered, eta_fn, R = 1000)
+boot_results2 <- boot(geih_filtered, eta_fn2, R = 1000)
+
+# Intervalos de confianza
+boot_ci1 <- boot.ci(boot_results1, type = "basic")  
+boot_ci2 <- boot.ci(boot_results2, type = "basic") 
+
+# tabla
+intervalodeconfianza_p3 <- data.frame(Variables = c("edad", "edad^2"),
+                                      `Intervalos de confianza` = c("(0.0503, 0.0663)", "(-0.0007, -0.0005)"))
+intervalodeconfianza_p3
+```
+
+Esto quiere decir, que por ejemplo, para la variable edad o en inglés “age”, el intervalo de confianza calculado es (0.0498,0.0669). Esto quiere decir que con un nivel de confianza del 95%, es posible afirmar que el coeficiente poblacional de la variable “edad”, se encuentra en ese intervalo. Es decir, esperamos que por cada unidad adicional de edad, el logaritmo del salario real aumente en un valor comprendido entre 0.0498 y 0.669, ceteris paribus. 
+
+## GAP en salario por género
+
+La brecha de género en el salario es una de las manifestaciones más evidentes de la desigualdad entre hombres y mujeres en el ámbito laboral. Para analizar este fenómeno, se realizarán dos modelos, el primero será la variable de salario contra la variable Female, en el segundo se añadrirán variables de control, tales como la edad, la educación y el total de horas trabajadas.
+
+$$
+log(w)= β_1+ β_2Female+Xcontrol+u
+$$
+En donde Female es una variable dummy con valor de 1 en caso de mujer y 0 en otro caso.
+
+A continuación podemos observar los resultados de las dos regresiones:
+
+```{r reg_fem, echo=FALSE}
+#Modificar los valores de la variable dummy para que 1=mujer
+geih_filtered$female <- ifelse(geih_filtered$sex == 1, 0, 1)
+
+# Variable educacion
+geih_filtered$educ <- factor(geih_filtered$maxEducLevel)
+
+reg_gendergap_1 <- lm(log_salarioreal~female, geih_filtered)
+reg_gendergap_3 <- lm(log_salarioreal~female+age+age_2+totalHoursWorked+educ,geih_filtered)
+
+stargazer(reg_gendergap_1,reg_gendergap_3,type="text")
+```
+
+Podemos observar que al realizar el modelo solo con la variable Female, la diferencia salarial entre los hombres y mujeres es de 4.7%; sin embargo, luego de añadir las variables de control, se evidencia que la diferencia salarial es aún más significativa, las mujeres ganan en promedio 18.1% menos que los hombres, manteniendo las demás variables constantes, en ambos casos, el coeficiente es significativo al 99% de confianza.
+
+Tambien podemos evidenciar que las variables de control edad, edad^2 y Horas trabajadas son significativas al 99% de confianza, con valores respectivos de 6.1%, -0.1% y -1%. Los dos primeros coeficientes muestran que la edad es un factor fundamental en el momento de definir el salario y, como en el punto anterior, llega un punto en el que más edad impacta de manera negativa el salario. El coeficiente relacionado con horas trabajadas, muestra que el incremento en horas trabajadas no necesariamente impacta de forma positiva el salario, lo cual puede estar ocasionado porque los individuos con menores salarios deben trabajar más tiempo para sostener sus gastos básicos.
+
+Ahora, se procederá a realizar el mismo modelo con el método FWL, a continuación se muestra una tabla en donde la primera columna corresponde al resultado de FWL y la segunda columna es el resultado de la regresión anterior.
+
+```{r reg_boostrap_p4, echo=FALSE}
+## Modelo FWL ----
+# Regress female on Xcontrols
+reg_gendergap_step_1 <- lm(female~age+age_2+totalHoursWorked+educ,geih_filtered)
+geih_filtered<-geih_filtered %>% mutate(female_resid=reg_gendergap_step_1$residuals) #Residuals 
+
+# Regress ln(w) on Xcontrols
+reg_gendergap_step_2 <- lm(log_salarioreal~age+age_2+totalHoursWorked+educ,geih_filtered)
+geih_filtered<-geih_filtered %>% mutate(lnw_resid=reg_gendergap_step_2$residuals) #Residuals 
+
+# Regress the residuals from step 2 on the residuals from step 1
+reg_gendergap_step_3<-lm(lnw_resid~female_resid,data=geih_filtered)
+
+stargazer(reg_gendergap_step_3,reg_gendergap_3,type="text")
+```
+Se identifica que luego de realizar el método, el coeficiente de la regresión salida de los resuduales con el método FWL es el mismo que el modelo realizado anteriormente.
+
+Luego de esto, se procede a realizar el modelo FWL con boostrap:
+
+```{r FWL_Boostrap, echo=FALSE}
+# Bootstrap para reg_gendergap_step_3
+eta_fn3 <- function(data, index) {
+  regress_step_1 <- lm(female ~ age + age_2 + totalHoursWorked + educ, data = data, subset = index)
+  residuals_step_1 <- regress_step_1$residuals
+  
+  regress_step_2 <- lm(log_salarioreal ~ age + age_2 + totalHoursWorked + educ, data = data, subset = index)
+  residuals_step_2 <- regress_step_2$residuals
+  
+  data_step_3 <- data[index, ]  # Subconjunto de datos para el paso 3
+  
+  # Agregar residuos al conjunto de datos para el paso 3
+  data_step_3$female_resid <- residuals_step_1
+  data_step_3$lnw_resid <- residuals_step_2
+  
+  regress_step_3 <- lm(lnw_resid ~ female_resid, data = data_step_3)
+  
+  coef(regress_step_3)
+}
+
+boot_results3 <- boot(geih_filtered, eta_fn3, R = 1000)
+boot_results3
+```
+En este caso, también podemos evidenciar que las mujeres ganan 18.1% menos que los hombres, manteniendo las demás variables constantes; además, estos resultados son robustos a la heterocedasticidad. Para completar el análisis, a continuación se presente el Mean Squared Error (MSE) de los tres modelos realizados:
+
+```{r MSE_Female, echo=FALSE}
+# MES ----
+# Calcular el MSE para reg_gendergap_3 (Modelo long)
+mse_reg_3 <- mean(reg_gendergap_3$residuals^2)
+
+# Calcular el MSE para reg_gendergap_step_3 (Modelo FWL)
+mse_step_3 <- mean(reg_gendergap_step_3$residuals^2)
+
+# Calcular el MSE promedio del bootstrap para reg_gendergap_step_3 (Modelo FWL con Boostrap)
+mse_boot_step_3 <- mean(boot_results3$t^2)
+
+## Tabla
+mse_table_p3 <- data.frame(Modelo = c( "Modelo long","Modelo FWL", "Modelo FWL con Boostrap"),
+                        MSE = c(mse_reg_3,mse_step_3, mse_boot_step_3))
+
+# Asignar nombres a las columnas
+names(mse_table_p3) <- c("Modelo", "MSE")
+
+# Imprimir la tabla
+print(mse_table_p3)
+```
+La tabla anterior muestra que el modelo FWL con Boostrap presenta un mejor ajuste en los datos que en los casos del modelo principal (Modelo long) y el Modelo FWL, lo cual es consistente con la teoría.
+
+Por último, a continuación se muestra la tabla de los valores estimados del modelo:
+
+```{r gaf_female, echo=FALSE}
+# Obtener los valores ajustados 
+y_estimados_gendergap <- predict(reg_gendergap_3)
+
+# Crear un gráfico de dispersión
+plot(geih_filtered$age, geih_filtered$log_salarioreal, 
+     xlab = "Edad", ylab = "Log Salario Real",
+     main = "Regresión de Salario Real en función de la Edad",
+     pch = 16, col = "blue")
+
+# Agregar los valores ajustados
+points(geih_filtered$age, y_estimados_gendergap, pch = 16, col = "green")
+```
+
+En este caso, se evidencia que los datos estimados parecen seguir el comportamiento de los valores reales y, similar a la gráfica en donde solo se tiene en cuenta la edad, se observa un crecimiento de los datos hasta mediados de los años 50, luego esto, se nota un leve decrecimiento en el salario.
+
+# Punto 5
+
+Dividiendo la muestra en dos submuestras, la primera de ellas (70%) para entrenamiento y la segunda (30%) como muestra de prueba, se procedió a realizar una predicción del ingreso. Ahora bien, para lograr esto se incluyó además una semilla de 10101. Se eligirán a partir de dicha base de datos una serie de posibles predictores:
+
+```{r sel_predictors, echo=FALSE}
+### Selecting some predictors
+playgroundb <- geih_filtered %>% select (y_salary_m_hu, maxEducLevel,
+                                        p6426, age,
+                                        estrato1, sex,
+                                        formal, informal,
+                                        hoursWorkUsual, totalHoursWorked,
+                                        hoursWorkActualSecondJob,
+                                        oficio, relab,
+                                        p6870, sizeFirm,
+                                        p6610, p7040, p7160,
+                                        p6920, regSalud,
+                                        p7500s1, p7500s1a1,
+                                        p7510s5, p7510s5a1,
+                                        p7510s6, p7510s6a1,
+                                        p7510s7, p7510s7a1
+                                        )
+### Creating and adjusting variables
+# Create log variable for real hourly salary
+playgroundb$log_salariorealh <-log(playgroundb$y_salary_m_hu)
+
+# Rename p6426
+playgroundb <- playgroundb %>% rename(exp = p6426)
+
+# Create experience squared
+playgroundb <- playgroundb %>% mutate(exp2 = exp^2)
+
+# Create age squared
+playgroundb <- playgroundb %>% mutate(age2 = age^2)
+
+# Modify the values for dummy variable so that 1 = female
+playgroundb$female <- ifelse(playgroundb$sex == 1, 0, 1)
+playgroundb$female <- factor(playgroundb$female)
+
+# Categorical variables
+playgroundb$educ <- factor(playgroundb$maxEducLevel)
+playgroundb$oficio <- factor(playgroundb$oficio)
+playgroundb$relab <- factor(playgroundb$relab)
+playgroundb$sizeFirm <- factor(playgroundb$sizeFirm)
+playgroundb$p6920 <- factor(playgroundb$p6920)        #Esto es si cotiza a pensión
+playgroundb$regSalud <- factor(playgroundb$regSalud)  
+playgroundb$formal <- factor(playgroundb$formal)
+playgroundb$informal <- factor(playgroundb$informal)
+playgroundb$estrato1 <- factor(playgroundb$estrato1)
+playgroundb$p7040 <- factor(playgroundb$p7040)        #Esto es si tiene otro trabajo adicional
+playgroundb$p7160 <- factor(playgroundb$p7160)        #Esto es si podría trabajar en algo más en menos de un mes
+
+## Descriptive statistics
+stargazer(data.frame(playgroundb), header=FALSE, type='text', title = 'Variables included in the Selected Data Set')
+
+## Distribution of real hourly salary
+plot(density(playgroundb$log_salariorealh))
+
+### Linear Model Specification
+
+# Model1. Linear Model using age
+regresion_salario_edad <- lm(log_salariorealh~age + age2, playgroundb)
+stargazer(regresion_salario_edad, type = "text")
+
+playgroundb <- playgroundb %>% mutate(yhat = predict(regresion_salario_edad))
+
+summ <- playgroundb %>%
+  group_by(age, age2) %>%
+  summarize(
+    mean_y = mean(log_salariorealh),
+    yhat_reg = mean(yhat), .groups = "drop"
+  )
+
+ggplot(summ) + geom_line(
+  aes(x = age, y = yhat_reg),
+  color = "blue", size = 1.5
+) + 
+  labs(
+    title = "Ln wages by age in the EIGH",
+    x = "Age",
+    y = "Ln Real hourly wage"
+  ) +
+  theme_bw()
+
+regresion_salario_edad$coefficients
+-regresion_salario_edad$coefficients[2]/(2*regresion_salario_edad$coefficients[3])
+
+
+### Split the sample into two: a training (70%) and a testing (30%) sample.
+## Using the data.Rdata database. This db is without missing values for the resultant variable (y_salary_m_hu)
+
+# Making this example reproducible
+set.seed(10101)
+
+# Create ID column with a row number
+playgroundb$id <- 1:nrow(playgroundb)
+
+# Use 70% of the dataset as a training set and 30% as a test set
+train <- playgroundb %>% dplyr::sample_frac(0.70)
+test <- dplyr::anti_join(playgroundb, train, by = 'id')
+```
+
+En virtud de lo anterior se ejecutó la validación cruzada con una serie de modelos, con el objetivo de calcular el menor error cuadrático medio, esto es, identificar el modelo que mejor prediga el salario real por hora.
+
+## Modelo 1: Edad de la persona
+```{r model_1, echo=FALSE}
+## Model 1: Linear relationship
+model1 <- lm(log_salariorealh~age, data = train)
+test$predict1 <- predict(model1, newdata = test)
+mse1 <- with(test, mean((log_salariorealh - predict1)^2))
+
+```
+
+## Modelo 2: Al modelo anterior añade la edad al cuadrado
+```{r model_2, echo=FALSE}
+## Model 2: Quadratic relationship between wage and age
+model2 <- lm(log_salariorealh~age + age2, data = train)
+test$predict2 <- predict(model2, newdata = test)
+mse2 <- with(test, mean((log_salariorealh - predict2)^2))
+```
+
+## Modelo 3: Al modelo anterior añade el nivel de educación
+```{r model_3, echo=FALSE}
+## Model 3: Adding level of education
+model3 <- lm(log_salariorealh~age + age2 + educ, data = train)
+test$predict3 <- predict(model3, newdata = test)
+mse3 <- with(test, mean((log_salariorealh - predict3)^2))
+```
+
+## Modelo 4: Al modelo anterior añade la experiencia de la persona
+```{r model_4, echo=FALSE}
+## Model 4: Adding level of experience
+model4 <- lm(log_salariorealh~age + age2 + educ + exp, data = train)
+test$predict4 <- predict(model4, newdata = test)
+mse4 <- with(test, mean((log_salariorealh - predict4)^2))
+```
+
+## Modelo 5: Al modelo anterior añade el cuadrado de la experiencia
+```{r model_5, echo=FALSE}
+## Model 5: Testing adding squared experience just only in this model
+model5 <- lm(log_salariorealh~ age + age2 + educ + exp + exp2, data = train)
+test$predict5 <- predict(model5, newdata = test)
+mse5 <- with(test, mean((log_salariorealh - predict5)^2))
+```
+
+## Modelo 6: Al modelo anterior añade las horas trabajadas
+```{r model_6, echo=FALSE}
+## Model 6: Adding hours worked
+model6 <- lm(log_salariorealh~age + age2 + educ + exp + exp2 + hoursWorkUsual + totalHoursWorked, data = train)
+test$predict6 <- predict(model6, newdata = test)
+mse6 <- with(test, mean((log_salariorealh - predict6)^2))
+```
+
+## Modelo 7: Al modelo anterior añade el género si es mujer
+```{r model_7, echo=FALSE}
+## Model 7: Adding gender female
+model7 <- lm(log_salariorealh~age + age2 + educ + exp + exp2 + hoursWorkUsual + totalHoursWorked + female, data = train)
+test$predict7 <- predict(model7, newdata = test)
+mse7 <- with(test, mean((log_salariorealh - predict7)^2))
+```
+
+## Modelo 8: Al modelo anterior añade si se recibe un ingreso adicional
+```{r model_8, echo=FALSE}
+## Model 8: Adding other income
+model8 <- lm(log_salariorealh~age + age2 + educ + exp + exp2 + hoursWorkUsual + totalHoursWorked + female + p7500s1a1 + p7510s5a1 + p7510s6a1 + p7510s7a1, data = train)
+test$predict8 <- predict(model8, newdata = test)
+mse8 <- with(test, mean((log_salariorealh - predict8)^2))
+```
+
+## Modelo 9: Al modelo anterior añade si cotiza a pensión
+```{r model_9, echo=FALSE}
+## Model 9: Adding pension
+model9 <- lm(log_salariorealh~age + age2 + educ + exp + exp2 + hoursWorkUsual + totalHoursWorked + female + p7500s1a1 + p7510s5a1 + p7510s6a1 + p7510s7a1 + p6920, data = train)
+test$predict9 <- predict(model9, newdata = test)
+mse9 <- with(test, mean((log_salariorealh - predict9)^2))
+```
+
+## Modelo 10: Al modelo anterior añade si la persona es informal
+```{r model_10, echo=FALSE}
+## Model 10: Adding informal variable
+model10 <- lm(log_salariorealh~age + age2 + educ + exp + exp2 + hoursWorkUsual + totalHoursWorked + female + p7500s1a1 + p7510s5a1 + p7510s6a1 + p7510s7a1 + p6920 + informal, data = train)
+test$predict10 <- predict(model10, newdata = test)
+mse10 <- with(test, mean((log_salariorealh - predict10)^2))
+```
+
+## Modelo 11: Al modelo anterior añade el tamaño de la firma
+```{r model_11, echo=FALSE}
+## Model 11: Adding size firm variable
+model11 <- lm(log_salariorealh~age + age2 + educ + exp + exp2 + hoursWorkUsual + totalHoursWorked + female + p7500s1a1 + p7510s5a1 + p7510s6a1 + p7510s7a1 + p6920 + informal + sizeFirm, data = train)
+test$predict11 <- predict(model11, newdata = test)
+mse11 <- with(test, mean((log_salariorealh - predict11)^2))
+```
+
+## Modelo 12: Al modelo anterior añade el estrato de la persona
+```{r model_12, echo=FALSE}
+## Model 12: Adding estrato1 variable
+model12 <- lm(log_salariorealh~age + age2 + educ + exp + exp2 + hoursWorkUsual + totalHoursWorked + female + p7500s1a1 + p7510s5a1 + p7510s6a1 + p7510s7a1 + p6920 + informal + sizeFirm + estrato1, data = train)
+test$predict12 <- predict(model12, newdata = test)
+mse12 <- with(test, mean((log_salariorealh - predict12)^2))
+```
+
+## Modelo 13: Al modelo anterior añade si tiene un trabajo adicional
+```{r model_13, echo=FALSE}
+## Model 13: Adding p7040 variable (additional job)
+model13 <- lm(log_salariorealh~age + age2 + educ + exp + exp2 + hoursWorkUsual + totalHoursWorked + female + p7500s1a1 + p7510s5a1 + p7510s6a1 + p7510s7a1 + p6920 + informal + sizeFirm + estrato1 + p7040, data = train)
+test$predict13 <- predict(model13, newdata = test)
+mse13 <- with(test, mean((log_salariorealh - predict13)^2))
+```
+
+
+Tras realizar el ejercicio de iteración, se observa que al pasar del Modelo 12 al Modelo 13 el MSE se incrementa; es decir, el Modelo 13 es el que mejor predice el ingreso. A continuación se resumen los MSE obtenidos para cada modelo probado, donde se confirma lo anteriormente dicho:
+
+```{r vec_models, echo=FALSE}
+## Creating a MSE vector
+mse <- c(mse1, mse2, mse3, mse4, mse5, mse6, mse7, mse8, mse9, mse10, mse11, mse12, mse13)
+
+# Create a data frame
+results <- data.frame(model = factor (c("Model1", "Model2",
+                                        "Model3", "Model4",
+                                        "Model5", "Model6",
+                                        "Model7", "Model8",
+                                        "Model9", "Model10",
+                                        "Model11", "Model12",
+                                        "Model13"), ordered = TRUE),
+                      MSE = mse)
+results
+```
+
+Producto de lo anterior, se considera que el modelo que mejor predice el ingreso es:
+
+
+$$
+ln(salario)= edad + edad^2 + educ + exp + exp^2 + horas_{trabajadas} + gen_{fem} +
+$$
+$$
+Ingreso_{adicional} + pensión + informal + tamaño{firma} + estrato + trabajo_{adicional} +u
+$$ 
+
+```{r loocv_1, echo=FALSE}
+## LOOCV vs. Validation set approach
+### LOOCV ###
+# Making this example reproducible
+set.seed(10101)
+
+# In LOOCV k = n
+K <- 9000
+
+# Vectors to store the predicted values and mse
+predict_model12 <- vector("numeric", K)
+predict_model13 <- vector("numeric", K)
+mse_model12 <- vector("numeric", K)
+mse_model13 <- vector("numeric", K)
+
+# Perform LOOCV
+for (i in 1:K) {
+  # Training and testing set
+  train_data <- playgroundb[-i, ]
+  test_data <- playgroundb[i, ]
+  
+  # Fitting the models
+  model14 <- lm(log_salariorealh ~ age + age2 + educ + exp + hoursWorkUsual + totalHoursWorked + female + p7500s1a1 + p7510s5a1 + p7510s6a1 + p7510s7a1 + p6920 + informal + sizeFirm + estrato1, data = train_data)
+  model15 <- lm(log_salariorealh ~ age + age2 + educ + exp + exp2 + hoursWorkUsual + totalHoursWorked + female + p7500s1a1 + p7510s5a1 + p7510s6a1 + p7510s7a1 + p6920 + informal + sizeFirm + estrato1 + p7040, data = train_data)
+  
+  # Testing the models
+  predict_model12[i] <- predict(model14, newdata = test_data)
+  predict_model13[i] <- predict(model15, newdata = test_data)
+  
+  # Calculating the MSE
+  mse_model12[i] <- with(test_data, (log_salariorealh - predict_model12[i])^2)
+  mse_model13[i] <- with(test_data, (log_salariorealh - predict_model13[i])^2)
+}
+
+mean_mse_model12 <- mean(mse_model12)
+mean_mse_model13 <- mean(mse_model13)
+
+cat("LOOCV MSE for Model 12:", mean_mse_model12, "\n")
+cat("LOOCV MSE for Model 13:", mean_mse_model13, "\n")
+```
+Con el enfoque de validación cruzada previa, los modelos que arrojaron los menores valores para el error cuadrático medio fueron el model12 y model13 con los siguientes valores:
+
+        Model12 0.2278255
+        Model13 0.2279195
+
+Por lo tanto, usando los modelos anteriores, se realizó el ajuste para ambos usando el enfoque de LOOCV. Los resultados mostraron que hay una disminución en el error cuadrático medio, sin embargo no es una reducción tan significativa.
+
+        LOOCV MSE for Model 12: 0.2252269 
+        LOOCV MSE for Model 13: 0.2249212 
+
+Lo cierto es que con el primer enfoque de validación cruzada se alcanzaron valores del error cuadrático medio bajos, y estos nuevos resultados con LOOCV fueron tan sólo un poco menores.
+
+Realizar la validación de predicción de los datos usando el enfoque LOOCV permite evidenciar que entrenar el modelo con una mayor cantidad de muestras de entrenamiento, y validarlo con las diferentes observaciones de todo el dataset, permite que la influencia estadística contribuya a valores menores en el error cuadrático medio.
+
+NOTA: Es importante mencionar que al intentar ejecutar el loop con el total de las observaciones del dataset 9785, o incluso con 9784, los errores cuádraticos medios nos arrojaban valores no válidos. Es por esto que decidimos, realizar la prueba del loop primero con K = 100, luego K = 1000, y por último K = 9000, generando valores para los MSE, ya que no logramos corregir el loop para que funcionara con el 100% de las observaciones.
+
+    LOOCV MSE for Model 12: NA 
+    LOOCV MSE for Model 14: NA 
