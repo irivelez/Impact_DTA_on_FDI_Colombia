@@ -1,0 +1,244 @@
+---
+title: "Análisis Descriptivo"
+output: word_document
+date: "2023-07-02"
+---
+
+```{r setup, eval=FALSE, include=FALSE}
+### Initial Configuration
+
+rm(list = ls())
+if(!require(pacman)) install.packages("pacman")
+library(pacman)
+p_load(tidyverse, # Manejar bases de datos
+       fastDummies # Dumificar
+)
+install.packages("readxl")
+library(readxl)
+
+install.packages("knitr")
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r loading_data, eval=FALSE, include=FALSE}
+## Loading initial database
+
+setwd("/Users/irina/Library/CloudStorage/OneDrive-Universidaddelosandes/Documentos compartidos/Bases_de_datos/Backup/")
+datos <- read_excel("Base_datos_trimestral.xlsx")
+datos <- data.frame(datos)
+```
+
+```{r exploring_data, eval=FALSE, include=FALSE}
+head(datos)
+summary(datos)
+str(datos)
+names(datos)
+
+# Creating the tax difference variable
+names(datos)
+datos$Dif_impuesto <- datos$Impuesto_renta_corp - datos$Impuesto_renta_COL
+
+# Dealing with missing values
+missing_values <- sort(sapply(datos, function(x) sum(is.na(x))), decreasing = TRUE)
+missing_values
+
+datos_filtered <- datos[complete.cases(datos$PIB_percapita), ]
+datos_filtered <- datos_filtered[complete.cases(datos_filtered$IPC), ]
+datos_filtered <- datos_filtered[complete.cases(datos_filtered$BC), ]
+
+missing_values <- sort(sapply(datos_filtered, function(x) sum(is.na(x))), decreasing = TRUE)
+missing_values
+
+# Deleting COLCAP variable
+datos_filtered <- datos_filtered[, -which(names(datos_filtered) == "COLCAP")]
+
+save(datos_filtered, file = "/Users/irina/Documents/Repositorios/Impact_DTA_on_FDI_Colombia/stores/data.Rdata")
+
+```
+
+## Análisis descriptivo
+
+## Variables macroeconómicas
+
+En la siguiente tabla se presenta un resumen de las estadísticas descriptivas de las variables cuántitativas de la base de datos que contiene los flujos de Inversión extranjera directa en Colombia con el resto del mundo. Principalmente nos enfocamos en las variables macroeconómicas de los países.
+
+```{r descriptive_statistics, echo=FALSE}
+
+## Set working directory and load the DB
+setwd("/Users/irina/Documents/Repositorios/Impact_DTA_on_FDI_Colombia/stores")
+load("data.Rdata")
+
+# Calculating the descriptive statistics for the interest variables
+variables <- c("IED", "Dif_impuesto", "PIB_tasa_crecimiento", "PIB_percapita", "IPC", "BC")
+
+media <- colMeans(datos_filtered[, variables])
+media <- format(media, digits = 2)
+
+desviaciones <- apply(datos_filtered[, variables], 2, sd)
+desviaciones <- format(desviaciones, digits = 2, scientific = FALSE)
+
+minimo <- apply(datos_filtered[, variables], 2, min)
+minimo <- format(minimo, digits = 2, scientific = FALSE)
+
+maximo <- apply(datos_filtered[, variables], 2, max)
+maximo <- format(maximo, digits = 2, scientific = FALSE)
+
+summary_table <- data.frame(Variable = variables, 
+                            Media = media, 
+                            Desviaciones.Std = desviaciones,
+                            Mínimo = minimo,
+                            Máximo = maximo)
+
+library(knitr)
+summary_table <- kable(summary_table)
+print(summary_table)
+
+```
+Se obesrva que para la IED, el valor máximo de flujos entrantes a Colombia se presentó con Chile en el último trimestre del 2012, sin embargo, se observa que la media de IED de Chile es de USD $121,50 millones, y en el histograma se observa un único valor por encima de USD $2500 millones.
+
+```{r details_outliers, echo=FALSE}
+## Dealing with outliers
+
+# Mean Chile
+mean_IED_Chile <- mean(datos_filtered$IED[datos_filtered$País == "Chile"])
+print(mean_IED_Chile)
+
+# Chile IED
+datos_chile <- datos_filtered$IED[datos_filtered$País == "Chile"]
+
+# Histogram
+hist(datos_chile, xlab = "IED", ylab = "Frecuencia", main = "Histograma de IED proveniente de Chile", breaks = 30)
+
+
+```
+Algo similar sucede con el valor mínimo de flujos entrantes, porque parece ser un valor atípico. El valor mínimo se presentó con Países Bajos, también en el último trimestre del 2012. La media de IED de Chile es de USD $89,83 millones, y en el histograma se observa un único flujo negativo por debajo de USD $2000 millones.
+
+```{r details_outliers2, echo=FALSE}
+# Mean Países Bajos
+mean_IED_PaisesBajos <- mean(datos_filtered$IED[datos_filtered$País == "Países Bajos"])
+print(mean_IED_PaisesBajos)
+
+# Países Bajos IED
+datos_paisesbajos <- datos_filtered$IED[datos_filtered$País == "Países Bajos"]
+
+# Histogram
+hist(datos_paisesbajos, xlab = "IED", ylab = "Frecuencia", main = "Histograma de IED proveniente de Países Bajos", breaks = 30)
+
+```
+A partir de lo anterior, se puede confirmar que los valores máximo y mínimo que se están observando en los datos para la IED corresponden a valores atípicos, por lo tanto se imputará el promedio de la IED para Chile y Países Bajos respectivamente, sin considerar el valor atípico de cada país para el cálculo de la media.
+
+- Para Chile, la media pasó de USD $121,5 millones a USD$81,12 millones. Este valor se imputará en el valor máximo de IED correspondiente a Chile.
+- Para Países Bajos, la media se incrementó de USD $89,83 millones a USD $127,54 millones. Este valor se imputará en el valor mínimo de IED correspondiente a Países Bajos.
+
+```{r details_outliers3, echo=FALSE}
+# Calculating the mean without outliers for Chile and Países Bajos
+datos_chile <- datos_filtered$IED[datos_filtered$País == "Chile" & datos_filtered$IED != max(datos_filtered$IED[datos_filtered$País == "Chile"], na.rm = TRUE)]
+
+mean_IED_Chile <- mean(datos_chile, na.rm = TRUE)
+print(mean_IED_Chile)
+
+datos_paisesbajos <- datos_filtered$IED[datos_filtered$País == "Países Bajos" & datos_filtered$IED != min(datos_filtered$IED[datos_filtered$País == "Países Bajos"], na.rm = TRUE)]
+
+mean_IED_PaisesBajos <- mean(datos_paisesbajos, na.rm = TRUE)
+print(mean_IED_PaisesBajos)
+
+# Imputing the values
+
+# Chile
+datos_filtered$IED[datos_filtered$País == "Chile" & datos_filtered$IED == max(datos_filtered$IED[datos_filtered$País == "Chile"], na.rm = TRUE)] <- mean_IED_Chile
+
+# Países Bajos
+datos_filtered$IED[datos_filtered$País == "Países Bajos" & datos_filtered$IED == min(datos_filtered$IED[datos_filtered$País == "Países Bajos"], na.rm = TRUE)] <- mean_IED_PaisesBajos
+
+```
+
+Luego de realizar la imputación de las medias de cada país para remplazar los valores atípicos, se muestra a continuación el histograma de IED para Chile y Países Bajos. Se puede ver que ya no se presentan valores atípicos.
+
+```{r details_outliers4, echo=FALSE}
+
+# Histogram Chile
+hist(datos_chile, xlab = "IED", ylab = "Frecuencia", main = "Histograma de IED proveniente de Chile", breaks = 30)
+
+# Histogram Países Bajos
+hist(datos_paisesbajos, xlab = "IED", ylab = "Frecuencia", main = "Histograma de IED proveniente de Países Bajos", breaks = 30)
+```
+
+Luego de corregir los valores atípicos de la IED, se vuelve a presentar el resumen de las estadísticas descriptivas, y se presenta el histograma de la IED para todos los datos.
+
+```{r descriptive_statistics2, echo=FALSE}
+
+# Calculating the descriptive statistics without outliers
+media <- colMeans(datos_filtered[, variables])
+media <- format(media, digits = 2)
+
+desviaciones <- apply(datos_filtered[, variables], 2, sd)
+desviaciones <- format(desviaciones, digits = 2, scientific = FALSE)
+
+minimo <- apply(datos_filtered[, variables], 2, min)
+minimo <- format(minimo, digits = 2, scientific = FALSE)
+
+maximo <- apply(datos_filtered[, variables], 2, max)
+maximo <- format(maximo, digits = 2, scientific = FALSE)
+
+summary_table <- data.frame(Variable = variables, 
+                            Media = media, 
+                            Desviaciones.Std = desviaciones,
+                            Mínimo = minimo,
+                            Máximo = maximo)
+print(summary_table)
+
+# IED Histogram
+hist(datos_filtered$IED, xlab = "IED", ylab = "Frecuencia", main = "Histograma de IED proveniente del resto del mundo", breaks = 50)
+
+```
+
+## Variables termómetro para la economía mundial
+
+De igual manera, se presentan las estadísticas descriptivas para variables que sirven como termómetro de la economía mundial, como el índice S&P 500 y el precio representativo del petróleo Brent. De igual manera, se incluye un efecto fijo de tiempo que corresponde a la distancia en Km de cada país con Colombia.
+
+```{r descriptive_statistics3, echo=FALSE}
+variables_mundo <- c("S.P_500", "Brent", "Distancia_km")
+
+mediaw <- colMeans(datos_filtered[, variables_mundo])
+mediaw <- format(mediaw, digits = 2)
+
+desviacionesw <- apply(datos_filtered[, variables_mundo], 2, sd)
+desviacionesw <- format(desviacionesw, digits = 2, scientific = FALSE)
+
+minimow <- apply(datos_filtered[, variables_mundo], 2, min)
+minimow <- format(minimow, digits = 2, scientific = FALSE)
+
+maximow <- apply(datos_filtered[, variables_mundo], 2, max)
+maximow <- format(maximow, digits = 2, scientific = FALSE)
+
+summary_tablew <- data.frame(Variable = variables_mundo, 
+                            Media = mediaw, 
+                            Desviaciones.Std = desviacionesw,
+                            Mínimo = minimow,
+                            Máximo = maximow)
+
+summary_tablew <- kable(summary_tablew)
+print(summary_tablew)
+
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
