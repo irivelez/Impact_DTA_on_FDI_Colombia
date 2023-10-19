@@ -1,0 +1,17 @@
+	(1)
+VARIABLES	ADT
+	
+PIB	0.0170*
+	(0.0100)
+PIB_per	-5.00e-05***
+	(3.28e-06)
+IPC	-0.131***
+	(0.0187)
+BC	5.31e-07***
+	(1.25e-07)
+Constant	0.697***
+	(0.133)
+	
+Observations	2,593
+Robust standard errors in parentheses	
+*** p<0.01, ** p<0.05, * p<0.1	
