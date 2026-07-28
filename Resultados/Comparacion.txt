@@ -1,0 +1,81 @@
+	(1)	(2)
+	reg_did_psm_5	reg_did_psm_6
+VARIABLES	LN_IED	LN_IED
+		
+tratado_tratamiento	0.638	0.651
+	(0.608)	(0.631)
+tratado_control	0.901	0.734
+	(0.636)	(0.656)
+_pscore	-2.137	-2.277
+	(1.861)	(1.905)
+PIB	0.0156	0.0161
+	(0.0170)	(0.0159)
+PIB_per	2.21e-05	2.58e-05
+	(2.86e-05)	(2.80e-05)
+Var_inflacion	-0.0153***	-0.0154***
+	(0.00421)	(0.00487)
+dif_imp	0.0195	0.0227
+	(0.0178)	(0.0179)
+BC	-2.28e-07	-2.17e-07
+	(2.92e-07)	(2.98e-07)
+Acuerdo_comercial	0.451	0.408*
+	(0.283)	(0.245)
+Acuerdo_prot_inversión	0.738**	0.857***
+	(0.302)	(0.315)
+Distancia_km	-0.000283***	-0.000280***
+	(4.79e-05)	(5.99e-05)
+Brent	0.0156***	0.0164***
+	(0.00309)	(0.00288)
+SP_500	-0.000255*	-0.000386***
+	(0.000152)	(0.000146)
+DXY	0.0431***	0.0477***
+	(0.0160)	(0.0154)
+Tasa_prestamo	-0.0256*	-0.0440***
+	(0.0139)	(0.0158)
+2.Calficacion_Moodys	-0.558	
+	(0.497)	
+3.Calficacion_Moodys	-0.677	
+	(0.520)	
+4.Calficacion_Moodys	-0.555	
+	(0.609)	
+5.Calficacion_Moodys	-0.795	
+	(0.794)	
+6.Calficacion_Moodys	-1.438***	
+	(0.484)	
+7.Calficacion_Moodys	0.370	
+	(0.854)	
+8.Calficacion_Moodys	-0.471	
+	(1.077)	
+9.Calficacion_Moodys	-0.587	
+	(0.791)	
+10.Calficacion_Moodys	-0.498	
+	(0.764)	
+11.Calficacion_Moodys	-0.288	
+	(0.989)	
+12.Calficacion_Moodys	-1.089	
+	(0.883)	
+13.Calficacion_Moodys	-0.816	
+	(0.882)	
+14.Calficacion_Moodys	-1.204	
+	(0.918)	
+15.Calficacion_Moodys	-1.565*	
+	(0.903)	
+16.Calficacion_Moodys	-0.465	
+	(0.902)	
+17.Calficacion_Moodys	-1.108	
+	(0.996)	
+18.Calficacion_Moodys	-0.928	
+	(1.199)	
+19.Calficacion_Moodys	-0.556	
+	(1.079)	
+20.Calficacion_Moodys	-2.554**	
+	(1.073)	
+21.Calficacion_Moodys	-2.509**	
+	(1.195)	
+Constant	-0.698	-1.270
+	(1.993)	(1.859)
+		
+Observations	2,214	2,214
+Number of ID	36	36
+Robust standard errors in parentheses		
+*** p<0.01, ** p<0.05, * p<0.1		

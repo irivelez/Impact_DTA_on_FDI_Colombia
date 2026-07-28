@@ -1,0 +1,29 @@
+{\rtf1\fs24
+\trowd\trgaph75\trleft-75\intbl\trqc\clbrdrt\brdrs\cellx2016\clbrdrt\brdrs\cellx4464
+\ql \cell\qc (1)\cell\row
+\trowd\trgaph75\trleft-75\trqc\cellx2016\cellx4464
+\ql \cell\qc reg_did_psm_et_1\cell\row
+\trowd\trgaph75\trleft-75\trqc\cellx2016\cellx4464
+\trowd\trgaph75\trleft-75\trqc\clbrdrb\brdrs\cellx2016\clbrdrb\brdrs\cellx4464
+\ql VARIABLES\cell\qc ADT\cell\row
+\trowd\trgaph75\trleft-75\trqc\cellx2016\cellx4464
+\ql \cell\qc \cell\row
+\ql PIB\cell\qc 0.00987\cell\row
+\ql \cell\qc (0.00603)\cell\row
+\ql PIB_per\cell\qc -2.68e-05***\cell\row
+\ql \cell\qc (2.15e-06)\cell\row
+\ql IPC\cell\qc -0.0463***\cell\row
+\ql \cell\qc (0.0113)\cell\row
+\ql Tasa_prestamo\cell\qc -0.0375***\cell\row
+\ql \cell\qc (0.00531)\cell\row
+\ql BC\cell\qc 2.46e-07***\cell\row
+\ql \cell\qc (7.19e-08)\cell\row
+\ql Constant\cell\qc 0.510***\cell\row
+\ql \cell\qc (0.0995)\cell\row
+\ql \cell\qc \cell\row
+\trowd\trgaph75\trleft-75\trqc\trbrdrb\brdrs\clbrdrb\brdrs\cellx2016\clbrdrb\brdrs\cellx4464
+\ql Observations\cell\qc 2,214\cell\row
+\pard\qc
+Robust standard errors in parentheses\par
+*** p<0.01, ** p<0.05, * p<0.1\par
+}

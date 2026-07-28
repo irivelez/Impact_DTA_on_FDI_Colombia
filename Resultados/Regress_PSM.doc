@@ -1,0 +1,57 @@
+{\rtf1\fs24
+\trowd\trgaph75\trleft-75\intbl\trqc\clbrdrt\brdrs\cellx3456\clbrdrt\brdrs\cellx4896\clbrdrt\brdrs\cellx6480\clbrdrt\brdrs\cellx8064\clbrdrt\brdrs\cellx9936\clbrdrt\brdrs\cellx11808\clbrdrt\brdrs\cellx13680
+\ql \cell\qc (1)\cell\qc (2)\cell\qc (3)\cell\qc (4)\cell\qc (5)\cell\qc (6)\cell\row
+\trowd\trgaph75\trleft-75\trqc\cellx3456\cellx4896\cellx6480\cellx8064\cellx9936\cellx11808\cellx13680
+\ql \cell\qc reg_psm_1\cell\qc reg_psm_2\cell\qc reg_psm_3\cell\qc reg_psm_4\cell\qc reg_psm_5\cell\qc reg_psm_6\cell\row
+\trowd\trgaph75\trleft-75\trqc\cellx3456\cellx4896\cellx6480\cellx8064\cellx9936\cellx11808\cellx13680
+\trowd\trgaph75\trleft-75\trqc\clbrdrb\brdrs\cellx3456\clbrdrb\brdrs\cellx4896\clbrdrb\brdrs\cellx6480\clbrdrb\brdrs\cellx8064\clbrdrb\brdrs\cellx9936\clbrdrb\brdrs\cellx11808\clbrdrb\brdrs\cellx13680
+\ql VARIABLES\cell\qc LN_IED\cell\qc LN_IED\cell\qc LN_IED\cell\qc LN_IED\cell\qc LN_IED\cell\qc LN_IED\cell\row
+\trowd\trgaph75\trleft-75\trqc\cellx3456\cellx4896\cellx6480\cellx8064\cellx9936\cellx11808\cellx13680
+\ql \cell\qc \cell\qc \cell\qc \cell\qc \cell\qc \cell\qc \cell\row
+\ql Tratamiento\cell\qc 0.531\cell\qc 0.930\cell\qc 0.936\cell\qc 1.096*\cell\qc 1.029*\cell\qc 0.992*\cell\row
+\ql \cell\qc (0.852)\cell\qc (0.750)\cell\qc (0.737)\cell\qc (0.587)\cell\qc (0.591)\cell\qc (0.597)\cell\row
+\ql ps\cell\qc 1.133\cell\qc 0.519\cell\qc -0.436\cell\qc -1.026*\cell\qc -1.395**\cell\qc -0.857\cell\row
+\ql \cell\qc (0.971)\cell\qc (0.446)\cell\qc (0.625)\cell\qc (0.562)\cell\qc (0.646)\cell\qc (0.767)\cell\row
+\ql PIB\cell\qc \cell\qc 0.0232\cell\qc 0.0217\cell\qc 0.00736\cell\qc 0.00465\cell\qc 0.0141\cell\row
+\ql \cell\qc \cell\qc (0.0166)\cell\qc (0.0166)\cell\qc (0.0166)\cell\qc (0.0159)\cell\qc (0.0158)\cell\row
+\ql PIB_per\cell\qc \cell\qc 3.70e-05\cell\qc 2.59e-05\cell\qc 3.87e-05\cell\qc 2.91e-05\cell\qc 3.17e-05\cell\row
+\ql \cell\qc \cell\qc (2.66e-05)\cell\qc (2.33e-05)\cell\qc (2.41e-05)\cell\qc (2.56e-05)\cell\qc (2.73e-05)\cell\row
+\ql IPC\cell\qc \cell\qc -4.72e-06\cell\qc -4.03e-06\cell\qc -5.73e-06\cell\qc -6.65e-06\cell\qc -6.70e-06\cell\row
+\ql \cell\qc \cell\qc (5.92e-06)\cell\qc (5.61e-06)\cell\qc (5.76e-06)\cell\qc (5.71e-06)\cell\qc (5.63e-06)\cell\row
+\ql dif_imp\cell\qc \cell\qc 0.0259\cell\qc 0.0374**\cell\qc 0.0348*\cell\qc 0.0380**\cell\qc 0.0294\cell\row
+\ql \cell\qc \cell\qc (0.0169)\cell\qc (0.0186)\cell\qc (0.0201)\cell\qc (0.0182)\cell\qc (0.0186)\cell\row
+\ql BC\cell\qc \cell\qc -6.75e-07*\cell\qc -3.51e-07\cell\qc -2.48e-07\cell\qc -1.06e-07\cell\qc -2.56e-07\cell\row
+\ql \cell\qc \cell\qc (3.71e-07)\cell\qc (3.38e-07)\cell\qc (3.56e-07)\cell\qc (3.48e-07)\cell\qc (3.61e-07)\cell\row
+\ql Acuerdo_comercial\cell\qc \cell\qc \cell\qc 0.343\cell\qc 0.759***\cell\qc 0.725**\cell\qc 0.464\cell\row
+\ql \cell\qc \cell\qc \cell\qc (0.253)\cell\qc (0.291)\cell\qc (0.338)\cell\qc (0.384)\cell\row
+\ql Acuerdo_prot_inversión\cell\qc \cell\qc \cell\qc 0.879**\cell\qc 1.516***\cell\qc 1.597***\cell\qc 1.204**\cell\row
+\ql \cell\qc \cell\qc \cell\qc (0.437)\cell\qc (0.426)\cell\qc (0.491)\cell\qc (0.556)\cell\row
+\ql Distancia_km\cell\qc \cell\qc \cell\qc \cell\qc -0.000239***\cell\qc -0.000246***\cell\qc -0.000254***\cell\row
+\ql \cell\qc \cell\qc \cell\qc \cell\qc (5.65e-05)\cell\qc (5.11e-05)\cell\qc (5.34e-05)\cell\row
+\ql Brent\cell\qc \cell\qc \cell\qc \cell\qc 0.0105***\cell\qc 0.0161***\cell\qc 0.0139***\cell\row
+\ql \cell\qc \cell\qc \cell\qc \cell\qc (0.00301)\cell\qc (0.00318)\cell\qc (0.00342)\cell\row
+\ql SP_500\cell\qc \cell\qc \cell\qc \cell\qc -0.000187\cell\qc -0.000348**\cell\qc -0.000490***\cell\row
+\ql \cell\qc \cell\qc \cell\qc \cell\qc (0.000139)\cell\qc (0.000148)\cell\qc (0.000152)\cell\row
+\ql o.Impago_deuda_sob\cell\qc \cell\qc \cell\qc \cell\qc \cell\qc -\cell\qc -\cell\row
+\ql \cell\qc \cell\qc \cell\qc \cell\qc \cell\qc \cell\qc \cell\row
+\ql Tasa_mer_monetario\cell\qc \cell\qc \cell\qc \cell\qc \cell\qc \cell\qc -0.346**\cell\row
+\ql \cell\qc \cell\qc \cell\qc \cell\qc \cell\qc \cell\qc (0.160)\cell\row
+\ql diftasa_mercmonetario\cell\qc \cell\qc \cell\qc \cell\qc \cell\qc 0.00383\cell\qc 0.348**\cell\row
+\ql \cell\qc \cell\qc \cell\qc \cell\qc \cell\qc (0.0420)\cell\qc (0.162)\cell\row
+\ql Tasa_prestamo\cell\qc \cell\qc \cell\qc \cell\qc \cell\qc \cell\qc 0.249*\cell\row
+\ql \cell\qc \cell\qc \cell\qc \cell\qc \cell\qc \cell\qc (0.142)\cell\row
+\ql diftasa_prestamo\cell\qc \cell\qc \cell\qc \cell\qc \cell\qc -0.0375\cell\qc -0.288**\cell\row
+\ql \cell\qc \cell\qc \cell\qc \cell\qc \cell\qc (0.0434)\cell\qc (0.143)\cell\row
+\ql DXY\cell\qc \cell\qc \cell\qc \cell\qc \cell\qc 0.0324**\cell\qc 0.0416**\cell\row
+\ql \cell\qc \cell\qc \cell\qc \cell\qc \cell\qc (0.0159)\cell\qc (0.0202)\cell\row
+\ql Constant\cell\qc 1.024**\cell\qc -0.162\cell\qc 0.446\cell\qc 1.371\cell\qc -1.135\cell\qc -2.954\cell\row
+\ql \cell\qc (0.480)\cell\qc (1.035)\cell\qc (0.956)\cell\qc (0.871)\cell\qc (1.812)\cell\qc (2.041)\cell\row
+\ql \cell\qc \cell\qc \cell\qc \cell\qc \cell\qc \cell\qc \cell\row
+\ql Observations\cell\qc 2,139\cell\qc 2,139\cell\qc 2,139\cell\qc 2,139\cell\qc 2,139\cell\qc 2,139\cell\row
+\ql R-squared\cell\qc 0.034\cell\qc \cell\qc \cell\qc \cell\qc \cell\qc \cell\row
+\trowd\trgaph75\trleft-75\trqc\trbrdrb\brdrs\clbrdrb\brdrs\cellx3456\clbrdrb\brdrs\cellx4896\clbrdrb\brdrs\cellx6480\clbrdrb\brdrs\cellx8064\clbrdrb\brdrs\cellx9936\clbrdrb\brdrs\cellx11808\clbrdrb\brdrs\cellx13680
+\ql Number of ID\cell\qc \cell\qc 35\cell\qc 35\cell\qc 35\cell\qc 35\cell\qc 35\cell\row
+\pard\qc
+Robust standard errors in parentheses\par
+*** p<0.01, ** p<0.05, * p<0.1\par
+}

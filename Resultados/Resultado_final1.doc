@@ -1,0 +1,51 @@
+{\rtf1\fs24
+\trowd\trgaph75\trleft-75\intbl\trqc\clbrdrt\brdrs\cellx3456\clbrdrt\brdrs\cellx5328\clbrdrt\brdrs\cellx7200\clbrdrt\brdrs\cellx9216
+\ql \cell\qc (1)\cell\qc (2)\cell\qc (3)\cell\row
+\trowd\trgaph75\trleft-75\trqc\cellx3456\cellx5328\cellx7200\cellx9216
+\ql \cell\qc reg_pols_4\cell\qc reg_did_4\cell\qc reg_did_psm_4\cell\row
+\trowd\trgaph75\trleft-75\trqc\cellx3456\cellx5328\cellx7200\cellx9216
+\trowd\trgaph75\trleft-75\trqc\clbrdrb\brdrs\cellx3456\clbrdrb\brdrs\cellx5328\clbrdrb\brdrs\cellx7200\clbrdrb\brdrs\cellx9216
+\ql VARIABLES\cell\qc LN_IED\cell\qc LN_IED\cell\qc LN_IED\cell\row
+\trowd\trgaph75\trleft-75\trqc\cellx3456\cellx5328\cellx7200\cellx9216
+\ql \cell\qc \cell\qc \cell\qc \cell\row
+\ql tratado_tratamiento\cell\qc \cell\qc \cell\qc 0.947\cell\row
+\ql \cell\qc \cell\qc \cell\qc (0.599)\cell\row
+\ql tratado_control\cell\qc \cell\qc \cell\qc 0.893\cell\row
+\ql \cell\qc \cell\qc \cell\qc (0.637)\cell\row
+\ql _pscore\cell\qc \cell\qc \cell\qc -0.598\cell\row
+\ql \cell\qc \cell\qc \cell\qc (1.422)\cell\row
+\ql PIB\cell\qc 0.0107\cell\qc 0.00598\cell\qc 0.0113\cell\row
+\ql \cell\qc (0.0106)\cell\qc (0.0109)\cell\qc (0.0155)\cell\row
+\ql PIB_per\cell\qc 4.12e-05***\cell\qc 6.70e-05***\cell\qc 4.13e-05**\cell\row
+\ql \cell\qc (8.41e-06)\cell\qc (1.32e-05)\cell\qc (2.05e-05)\cell\row
+\ql IPC\cell\qc 2.65e-08\cell\qc 4.36e-07\cell\qc 4.40e-07\cell\row
+\ql \cell\qc (1.90e-05)\cell\qc (1.91e-05)\cell\qc (4.14e-06)\cell\row
+\ql dif_imp\cell\qc 0.0325***\cell\qc 0.0297***\cell\qc 0.0325*\cell\row
+\ql \cell\qc (0.0105)\cell\qc (0.0112)\cell\qc (0.0177)\cell\row
+\ql BC\cell\qc -4.38e-07**\cell\qc -4.46e-07**\cell\qc -3.82e-07\cell\row
+\ql \cell\qc (1.76e-07)\cell\qc (1.78e-07)\cell\qc (3.16e-07)\cell\row
+\ql Acuerdo_comercial\cell\qc 0.546***\cell\qc 0.534***\cell\qc 0.534**\cell\row
+\ql \cell\qc (0.160)\cell\qc (0.162)\cell\qc (0.224)\cell\row
+\ql Acuerdo_prot_inversión\cell\qc 1.048***\cell\qc 0.866***\cell\qc 1.023***\cell\row
+\ql \cell\qc (0.263)\cell\qc (0.270)\cell\qc (0.290)\cell\row
+\ql Distancia_km\cell\qc -0.000277***\cell\qc \cell\qc -0.000287***\cell\row
+\ql \cell\qc (5.47e-05)\cell\qc \cell\qc (4.06e-05)\cell\row
+\ql Brent\cell\qc 0.0106***\cell\qc 0.0107***\cell\qc 0.0102***\cell\row
+\ql \cell\qc (0.00205)\cell\qc (0.00205)\cell\qc (0.00245)\cell\row
+\ql SP_500\cell\qc -0.000146**\cell\qc -0.000169***\cell\qc -0.000143\cell\row
+\ql \cell\qc (6.19e-05)\cell\qc (6.32e-05)\cell\qc (0.000129)\cell\row
+\ql ADT\cell\qc 0.114\cell\qc 0.134\cell\qc \cell\row
+\ql \cell\qc (0.226)\cell\qc (0.233)\cell\qc \cell\row
+\ql o.Distancia_km\cell\qc \cell\qc -\cell\qc \cell\row
+\ql \cell\qc \cell\qc \cell\qc \cell\row
+\ql Constant\cell\qc 1.642***\cell\qc -1.289**\cell\qc 1.556\cell\row
+\ql \cell\qc (0.564)\cell\qc (0.520)\cell\qc (1.057)\cell\row
+\ql \cell\qc \cell\qc \cell\qc \cell\row
+\ql Observations\cell\qc 2,593\cell\qc 2,593\cell\qc 2,593\cell\row
+\ql R-squared\cell\qc \cell\qc 0.039\cell\qc \cell\row
+\trowd\trgaph75\trleft-75\trqc\trbrdrb\brdrs\clbrdrb\brdrs\cellx3456\clbrdrb\brdrs\cellx5328\clbrdrb\brdrs\cellx7200\clbrdrb\brdrs\cellx9216
+\ql Number of ID\cell\qc 41\cell\qc 41\cell\qc 41\cell\row
+\pard\qc
+Standard errors in parentheses\par
+*** p<0.01, ** p<0.05, * p<0.1\par
+}

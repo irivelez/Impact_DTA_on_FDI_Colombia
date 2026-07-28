@@ -1,0 +1,51 @@
+{\rtf1\fs24
+\trowd\trgaph75\trleft-75\intbl\trqc\clbrdrt\brdrs\cellx3456\clbrdrt\brdrs\cellx5328
+\ql \cell\qc (1)\cell\row
+\trowd\trgaph75\trleft-75\trqc\cellx3456\cellx5328
+\ql \cell\qc psm_etapa1\cell\row
+\trowd\trgaph75\trleft-75\trqc\cellx3456\cellx5328
+\trowd\trgaph75\trleft-75\trqc\clbrdrb\brdrs\cellx3456\clbrdrb\brdrs\cellx5328
+\ql VARIABLES\cell\qc Tratamiento\cell\row
+\trowd\trgaph75\trleft-75\trqc\cellx3456\cellx5328
+\ql \cell\qc \cell\row
+\ql PIB\cell\qc -0.0193**\cell\row
+\ql \cell\qc (0.00756)\cell\row
+\ql PIB_per\cell\qc -5.56e-05***\cell\row
+\ql \cell\qc (3.59e-06)\cell\row
+\ql IPC\cell\qc -0.0709***\cell\row
+\ql \cell\qc (0.0153)\cell\row
+\ql dif_imp\cell\qc 0.0369***\cell\row
+\ql \cell\qc (0.00377)\cell\row
+\ql BC\cell\qc 1.02e-06***\cell\row
+\ql \cell\qc (1.39e-07)\cell\row
+\ql Acuerdo_comercial\cell\qc 0.868***\cell\row
+\ql \cell\qc (0.0922)\cell\row
+\ql Acuerdo_prot_inversión\cell\qc 2.054***\cell\row
+\ql \cell\qc (0.117)\cell\row
+\ql Distancia_km\cell\qc -1.43e-05\cell\row
+\ql \cell\qc (8.97e-06)\cell\row
+\ql Brent\cell\qc 0.00450*\cell\row
+\ql \cell\qc (0.00244)\cell\row
+\ql SP_500\cell\qc 0.000118*\cell\row
+\ql \cell\qc (6.50e-05)\cell\row
+\ql o.Impago_deuda_sob\cell\qc -\cell\row
+\ql \cell\qc \cell\row
+\ql Tasa_mer_monetario\cell\qc 0.304***\cell\row
+\ql \cell\qc (0.0901)\cell\row
+\ql diftasa_mercmonetario\cell\qc -0.326***\cell\row
+\ql \cell\qc (0.0910)\cell\row
+\ql Tasa_prestamo\cell\qc -0.308***\cell\row
+\ql \cell\qc (0.0819)\cell\row
+\ql diftasa_prestamo\cell\qc 0.170**\cell\row
+\ql \cell\qc (0.0801)\cell\row
+\ql DXY\cell\qc -0.0325***\cell\row
+\ql \cell\qc (0.00826)\cell\row
+\ql Constant\cell\qc 5.363***\cell\row
+\ql \cell\qc (0.766)\cell\row
+\ql \cell\qc \cell\row
+\trowd\trgaph75\trleft-75\trqc\trbrdrb\brdrs\clbrdrb\brdrs\cellx3456\clbrdrb\brdrs\cellx5328
+\ql Observations\cell\qc 2,139\cell\row
+\pard\qc
+Robust standard errors in parentheses\par
+*** p<0.01, ** p<0.05, * p<0.1\par
+}

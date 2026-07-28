@@ -1,0 +1,42 @@
+	(1)
+	psm_etapa1
+VARIABLES	Tratamiento
+	
+PIB	-0.0193**
+	(0.00756)
+PIB_per	-5.56e-05***
+	(3.59e-06)
+IPC	-0.0709***
+	(0.0153)
+dif_imp	0.0369***
+	(0.00377)
+BC	1.02e-06***
+	(1.39e-07)
+Acuerdo_comercial	0.868***
+	(0.0922)
+Acuerdo_prot_inversión	2.054***
+	(0.117)
+Distancia_km	-1.43e-05
+	(8.97e-06)
+Brent	0.00450*
+	(0.00244)
+SP_500	0.000118*
+	(6.50e-05)
+o.Impago_deuda_sob	-
+	
+Tasa_mer_monetario	0.304***
+	(0.0901)
+diftasa_mercmonetario	-0.326***
+	(0.0910)
+Tasa_prestamo	-0.308***
+	(0.0819)
+diftasa_prestamo	0.170**
+	(0.0801)
+DXY	-0.0325***
+	(0.00826)
+Constant	5.363***
+	(0.766)
+	
+Observations	2,139
+Robust standard errors in parentheses	
+*** p<0.01, ** p<0.05, * p<0.1	

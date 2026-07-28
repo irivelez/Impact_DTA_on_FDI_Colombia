@@ -1,0 +1,20 @@
+	(1)
+	reg_did_psm_et_1
+VARIABLES	ADT
+	
+PIB	0.00987
+	(0.00603)
+PIB_per	-2.68e-05***
+	(2.15e-06)
+IPC	-0.0463***
+	(0.0113)
+Tasa_prestamo	-0.0375***
+	(0.00531)
+BC	2.46e-07***
+	(7.19e-08)
+Constant	0.510***
+	(0.0995)
+	
+Observations	2,214
+Robust standard errors in parentheses	
+*** p<0.01, ** p<0.05, * p<0.1	
